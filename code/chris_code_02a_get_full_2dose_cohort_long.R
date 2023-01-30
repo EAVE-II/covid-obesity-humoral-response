@@ -15,7 +15,7 @@
 #
 #   run 01a_Data_Omicron###############################
 
-df_all <- readRDS("/conf/EAVE/GPanalysis/progs/CR/Vaccine_Dose_2_Booster/output/temp/xdf_all_full_u.RDS")
+df_all <- readRDS("/conf/EAVE/GPanalysis/progs/CR/Vaccine_Dose_2_Booster/output/temp/xdf_all_full.RDS")
 Location <- "/conf/"  # Server
 all_deaths  <- readRDS(paste0(Location,"EAVE/GPanalysis/data/all_deaths.rds"))
 summary(all_deaths)
@@ -40,9 +40,12 @@ z_df_all_2d  <- z_df_all_2d  %>% filter(ageYear >= 18)  # only keep adults
 z_df_all_2d <- z_df_all_2d %>% filter(flag_incon==0)  # only keep consistent vacccine records
 
 z_df_all_2d<-mutate(z_df_all_2d,age_gp = 
-                 cut(ageYear, breaks = c(-Inf, 49,54,59,64,69,74,79,Inf),
-                     labels=c("18-49","50-54","55-59","60-64","65-69",
-                              "70-74","75-79","80+")))
+                 cut(ageYear, breaks = c(-Inf, 49,64,79,Inf),
+                     labels=c("18-49","50-64","65-79","80+")))
+
+z_df_all_2d <- z_df_all_2d %>% 
+  mutate(bmi_gp = cut(bmi_impute, breaks = c(-1, 18.5, 24.9, 29.9,39.9, 51),
+                      labels=c("<18.5", "18.5-24.9","25-29.9","30-39.9","40+")))
 
 z_df_all_2d<-mutate(z_df_all_2d,ur_combined=
                       if_else(ur6_2016_name=="1 Large Urban Areas"|
@@ -169,7 +172,7 @@ z <- tmerge(z,z_df, id=EAVE_LINKNO,
 )
 names(z)[names(z)=="per1"] <- "pv_v2_2"
 
-z_df <- z_df %>% mutate(period_end_date = date_vacc_2 + 139)
+z_df <- z_df %>% mutate(period_end_date = date_vacc_2 + 104)
 #z <- tmerge(z,z_df, id=EAVE_LINKNO, per1=tdc(period_end_date))
 z_df <- z_df %>% mutate(across(
   .cols = c(period_end_date),
@@ -180,7 +183,7 @@ z <- tmerge(z,z_df, id=EAVE_LINKNO,
 )
 names(z)[names(z)=="per1"] <- "pv_v2_3"
 
-z_df <- z_df %>% mutate(period_end_date = date_vacc_3)
+z_df <- z_df %>% mutate(period_end_date = date_vacc_2 + 139)
 #z <- tmerge(z,z_df, id=EAVE_LINKNO, per1=tdc(period_end_date))
 z_df <- z_df %>% mutate(across(
   .cols = c(period_end_date),
@@ -190,6 +193,17 @@ z <- tmerge(z,z_df, id=EAVE_LINKNO,
             per1=tdc(period_end_date)
 )
 names(z)[names(z)=="per1"] <- "pv_v2_4"
+
+z_df <- z_df %>% mutate(period_end_date = date_vacc_3)
+#z <- tmerge(z,z_df, id=EAVE_LINKNO, per1=tdc(period_end_date))
+z_df <- z_df %>% mutate(across(
+  .cols = c(period_end_date),
+  .fns = ~ interval(a_begin, .x) / ddays(1)
+))
+z <- tmerge(z,z_df, id=EAVE_LINKNO,
+            per1=tdc(period_end_date)
+)
+names(z)[names(z)=="per1"] <- "pv_v2_5"
 
 #get the post vacc 3 periods
 z_df <- z_df %>% mutate(period_end_date = date_vacc_3 + 13)
@@ -214,7 +228,7 @@ z <- tmerge(z,z_df, id=EAVE_LINKNO,
 )
 names(z)[names(z)=="per1"] <- "pv_v3_2"
 
-z_df <- z_df %>% mutate(period_end_date = date_vacc_3 + 55)
+z_df <- z_df %>% mutate(period_end_date = date_vacc_3 + 62)
 #z <- tmerge(z,z_df, id=EAVE_LINKNO, per1=tdc(period_end_date))
 z_df <- z_df %>% mutate(across(
   .cols = c(period_end_date),
@@ -299,8 +313,8 @@ if (output_list$endpoint %in% c("covid_hosp", "covid_death", "covid_hosp_death")
 }
 
 z_levs <- sort(unique(df$pv_period))
-z_labs <- c("uv", "v1_0:3","v1_4+", "v2_0:1" ,  "v2_2:9" ,  "v2_10:19", "v2_20+", 
-            "v3_0:1"  , "v3_2:4" ,  "v3_5:7", "v3_8+")
+z_labs <- c("uv", "v1_0:3","v1_4+", "v2_0:1" ,  "v2_2:9" ,  "v2_10:14", "v2_15:19", 
+            "v2_20+", "v3_0:1"  , "v3_2:4" ,  "v3_5:8", "v3_9+")
 # z_labs <- c("uv", "v1_0:3","v1_4+", "v2_0:1" ,  "v2_2:9" ,  "v2_10:19", "v2_20+", 
 #             "v3_0:1"  , "v3_2:4" ,  "v3_5:8", "v3_9:12", "v3_13+")
 #make period and pv_period factors
@@ -327,14 +341,14 @@ df <- df %>% mutate(pv_period_f_d3b = case_when(is.na(vacc_type_3) ~ as.characte
 #             "v3_0:1_Mo", "v3_2:4_Mo", "v3_5:8_Mo", "v3_9:12_Mo", "v3_13+_Mo",
 #             "v3_0:1_AZ", "v3_2:4_AZ", "v3_5:8_AZ", "v3_9:12_AZ", "v3_13+_AZ")
 z_levs <- c(levels(df$pv_period_f)[!grepl("v3", levels(df$pv_period_f))],
-            "v3_0:1_PB", "v3_2:4_PB", "v3_5:7_PB", "v3_8+_PB",
-            "v3_0:1_Mo", "v3_2:4_Mo", "v3_5:7_Mo", "v3_8+_Mo",
-            "v3_0:1_AZ", "v3_2:4_AZ", "v3_5:7_AZ", "v3_8+_AZ")
+            "v3_0:1_PB", "v3_2:4_PB", "v3_5:8_PB", "v3_9+_PB",
+            "v3_0:1_Mo", "v3_2:4_Mo", "v3_5:8_Mo", "v3_9+_Mo",
+            "v3_0:1_AZ", "v3_2:4_AZ", "v3_5:8_AZ", "v3_9+_AZ")
 df <- df %>% mutate(pv_period_f_d3b = factor(pv_period_f_d3b, levels=z_levs))
 
 #endpt is the response, pyears is the offset
 print(output_list$endpoint)
-saveRDS(df, paste0("/conf/EAVE/GPanalysis/progs/UA/second_booster_dose_failures/data/xdf_full_",
+saveRDS(df, paste0("/conf/EAVE/GPanalysis/progs/UA/second_booster_dose_failures/data/xdf_full_obesity_",
                    output_list$endpoint,".RDS"))
-#saveRDS(z_df_all_2d, paste0("/conf/EAVE/GPanalysis/progs/UA/second_booster_dose_failures/data/xdf_full_cohort.RDS"))
+saveRDS(z_df_all_2d, "/conf/EAVE/GPanalysis/progs/UA/second_booster_dose_failures/data/xdf_full_obesity.RDS")
 remove(list=ls(pa="^z"))

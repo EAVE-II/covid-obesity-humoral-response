@@ -2,12 +2,11 @@ library(tidyverse)
 library(scales)
 library(cowplot)
 
-ARR_data <- read.csv("/conf/EAVE/GPanalysis/progs/UA/second_booster_dose_failures/output/ARR_14-28_days_as_ref_b.csv")
-
+ARR_data <- read.csv("/conf/EAVE/GPanalysis/progs/UA/second_booster_dose_failures/obesity_codes/output/ARR_obesity.csv")
 expr_coef <- "([\\.0-9]+) \\(([\\.0-9]+), ([\\.0-9]+)\\)"
 
-### dose interval
-ARR_data1 <- ARR_data[c(2,3,6,7,9,10,12,13),]
+### BMI
+ARR_data1 <- ARR_data[c(2,3,4),]
 z <- ARR_data1 %>% 
   mutate(
     xvar="vacc_dose_interval",
@@ -18,114 +17,29 @@ z <- ARR_data1 %>%
   ) 
 t_coef_overall <- z[,c(6:10)]
 
-### age
-ARR_data1 <- ARR_data[c(38:44),]
-z <- ARR_data1 %>% 
-  mutate(
-    xvar="age_gp",
-    xlbl=X,
-    doseb_est       = as.numeric(str_replace(Adjusted.Rate.Ratio, expr_coef, "\\1")),
-    doseb_conf_low  = as.numeric(str_replace(LCI, expr_coef, "\\2")), 
-    doseb_conf_high = as.numeric(str_replace(UCI, expr_coef, "\\3"))
-  ) 
-t_coef_overall <- rbind(t_coef_overall,z[,c(6:10)])
-
-### BMI
-ARR_data1 <- ARR_data[c(50:54),]
-z <- ARR_data1 %>% 
-  mutate(
-    xvar="bmi_gp",
-    xlbl=X,
-    doseb_est       = as.numeric(str_replace(Adjusted.Rate.Ratio, expr_coef, "\\1")),
-    doseb_conf_low  = as.numeric(str_replace(LCI, expr_coef, "\\2")), 
-    doseb_conf_high = as.numeric(str_replace(UCI, expr_coef, "\\3"))
-  ) 
-t_coef_overall <- rbind(t_coef_overall,z[,c(6:10)])
-
-### Number of risk groups
-ARR_data1 <- ARR_data[c(45:49),]
-z <- ARR_data1 %>% 
-  mutate(
-    xvar="qcovid_cat",
-    xlbl=X,
-    doseb_est       = as.numeric(str_replace(Adjusted.Rate.Ratio, expr_coef, "\\1")),
-    doseb_conf_low  = as.numeric(str_replace(LCI, expr_coef, "\\2")), 
-    doseb_conf_high = as.numeric(str_replace(UCI, expr_coef, "\\3"))
-  ) 
-t_coef_overall <- rbind(t_coef_overall,z[,c(6:10)])
-
-### SIMD
-ARR_data1 <- ARR_data[c(55:58),]
-z <- ARR_data1 %>% 
-  mutate(
-    xvar="simd2019_quintile",
-    xlbl=X,
-    doseb_est       = as.numeric(str_replace(Adjusted.Rate.Ratio, expr_coef, "\\1")),
-    doseb_conf_low  = as.numeric(str_replace(LCI, expr_coef, "\\2")), 
-    doseb_conf_high = as.numeric(str_replace(UCI, expr_coef, "\\3"))
-  ) 
-t_coef_overall <- rbind(t_coef_overall,z[,c(6:10)])
-
 # tidy plot of demographics and health characteristics =======
 
 
 t_coef_ref <- tribble(
   ~xvar,                ~xlbl, ~doseb_est, ~doseb_conf_low, ~doesb_conf_high,
-  "vacc_dose_interval", "pv_period_fv2_2:9",  1.000, 1.000, 1.000,
-  "age_gp",           "18-49",         1.000, 1.000, 1.000,
-  "bmi_gp",            "18.5-24.9",     1.000, 1.000, 1.000,
-  "qcovid_cat",         "0",             1.000, 1.000, 1.000,
-  "simd2019_quintile",  "5-least",      1.000, 1.000, 1.000
+  "vacc_dose_interval", "pv_period_fv2_2:9",  1.000, 1.000, 1.000
 )
 
 lkp_xvar <- c(
-  "Dose\ninterval"           = "vacc_dose_interval",
-  "Age"                        = "age_gp",
-  "BMI"                        = "bmi_gp",
-  "QCovid\nscore"              = "qcovid_cat",
-  "Area\ndeprivation\nquintile" = "simd2019_quintile"
+  "Dose\ninterval"           = "vacc_dose_interval"
 )
 
 lkp_xlbl <- c(
-  # dose interval
   "Day 14-69" = "pv_period_fv2_2:9",
-  "Day 70-139" = "pv_period_fv2_10:19",
+  "Day 70-104" = "pv_period_fv2_10:14",
+  "Day 105-139" = "pv_period_fv2_15:19",
   "Day 140+" = "pv_period_fv2_20+",
-  "Day 14-34 Mo" = "pv_period_fv3_2:4_Mo",
-  "Day 14-34 PB" = "pv_period_fv3_2:4_PB",
-  "Day 35-55 Mo" = "pv_period_fv3_5:8_Mo",
-  "Day 35-55 PB" = "pv_period_fv3_5:8_PB",
-  "Day 56+ Mo" = "pv_period_fv3_9+_Mo",
-  "Day 56+ PB"   = "pv_period_fv3_9+_PB",
-  # age
-  "18-49"  = "18-49",
-  "50-54"  = "age_gp50-54",
-  "55-59"  = "age_gp55-59",
-  "60-64"  = "age_gp60-64",
-  "65-69"  = "age_gp65-69",
-  "70-74"  = "age_gp70-74",
-  "75-79"  = "age_gp75-79",
-  "80+"    = "age_gp80+",
-  # bmi
-  "<18.5"     = "bmi_gp<18.5",
-  "18.5-24.9" = "18.5-24.9",
-  "25.0-29.9" = "bmi_gp25-29.9",
-  "30.0-34.9" = "bmi_gp30-34.9",
-  "35.0-39.9" = "bmi_gp35-39.9",
-  "40.0+"     = "bmi_gp40+",
-  # qcovid
-  "0"   = "0",
-  "1"   = "n_risk_gps1",
-  "2"   = "n_risk_gps2",
-  "3"   = "n_risk_gps3",
-  "4"   = "n_risk_gps4",
-  "5+"  = "n_risk_gps5+",
-  # simd
-  "5 - Least deprived" = "5-least",
-  "4"                  = "simd2020_sc_quintile4",
-  "3"                  = "simd2020_sc_quintile3",
-  "2"                  = "simd2020_sc_quintile2",
-  "1"  = "simd2020_sc_quintile1 - High"
+  "B dose Day 14-34 Mo" = "pv_period_fv3_2:4_Mo",
+  "B dose Day 35-55 Mo" = "pv_period_fv3_5:8_Mo",
+  "B dose Day 56+ Mo" = "pv_period_fv3_9+_Mo",
+  "B dose Day 35-55 PB" = "pv_period_fv3_5:8_PB",
+  "B dose Day 14-34 PB" = "pv_period_fv3_2:4_PB",
+  "B dose Day 56+ PB"   = "pv_period_fv3_9+_PB"
 )
 
 lkp_colour <- c(
@@ -151,129 +65,433 @@ p_coef_overall_o <-p_coef_overall%>%
     xlbl = factor(xlbl, lkp_xlbl, names(lkp_xlbl))
   ) %>% 
   ggplot(aes(
-    x = doseb_est,
-    xmin = doseb_conf_low,
-    xmax = doseb_conf_high,
-    y = xlbl,
+    x = xlbl,
+    ymin = doseb_conf_low,
+    ymax = doseb_conf_high,
+    y = doseb_est,
     colour = est_type
   )) +
-  facet_grid(
-    xvar ~ .,
-    scales = "free",
-    space = "free_y",
-    switch = "y"
-  ) +
-  geom_vline(xintercept = 1) +
+  geom_hline(yintercept = 1,
+             linetype = "dashed") +
   geom_pointrange() +
-  scale_x_continuous(
+  scale_y_continuous(
     name = "Adjusted risk ratio (95% CI)",
     breaks = pretty_breaks()
   ) +
   scale_colour_manual(values = lkp_colour) +
   theme(
-    axis.title.y      = element_blank(),
+    axis.title.x      = element_blank(),
     strip.placement   = "outside",
     strip.background  = element_blank(),
-    strip.text.x      = element_text(face = "bold"),
-    strip.text.y.left = element_text(face = "bold"),
+    strip.text.y      = element_text(face = "bold"),
+    strip.text.x = element_text(face = "bold"),
     legend.position   = "none",
-    axis.text = element_text(face="bold")
+    axis.text = element_text(face="bold"),
+    axis.text.x = element_text(angle=90,vjust = 0.5),
+    plot.title = element_text(size = 11)
   ) +
   coord_cartesian(
-    xlim = c(0,7.5)
+    ylim = c(0,10.5)
   ) +
   labs(
-    title = "Demographic and health summaries"
+    title = "BMI all categories"
   )
 
 p_coef_overall_o
+######
 
-# plot QCovid items ==========================
-ARR_data <- read.csv("/conf/EAVE/GPanalysis/progs/UA/second_booster_dose_failures/output/ARR_conds_14-28_days_as_ref.csv")
-
+# <18.5
+ARR_data <- read.csv("/conf/EAVE/GPanalysis/progs/UA/second_booster_dose_failures/obesity_codes/output/ARR_obesity_<18.csv")
 expr_coef <- "([\\.0-9]+) \\(([\\.0-9]+), ([\\.0-9]+)\\)"
 
-# conditions
-z <- ARR_data %>% 
+### BMI
+ARR_data1 <- ARR_data[c(2,3,4),]
+z <- ARR_data1 %>% 
   mutate(
-    term=X,
+    xvar="vacc_dose_interval",
+    xlbl=X,
     doseb_est       = as.numeric(str_replace(Adjusted.Rate.Ratio, expr_coef, "\\1")),
     doseb_conf_low  = as.numeric(str_replace(LCI, expr_coef, "\\2")), 
     doseb_conf_high = as.numeric(str_replace(UCI, expr_coef, "\\3"))
   ) 
-t_coef_qcovid <- z[,c(6:9)]
+t_coef_overall <- z[,c(6:10)]
 
-lkp_qcovid <- c(
-  "Blood or bone marrrow cancer" = "Q_DIAG_BLOOD_CANCER",
-  "Rare neuron disease" = "Q_DIAG_NEURO",
-  "Immunosuppressed" = "immuno",
-  "Parkinson's disease" = "Q_DIAG_PARKINSONS",
-  "Diabetes type 1" = "Q_DIAG_DIABETES_1",
-  "Lung cancer" = "Q_DIAG_RESP_CANCER",
-  "Cirrhosis of the liver" = "Q_DIAG_CIRRHOSIS",
-  "Dementia" = "Q_DIAG_DEMENTIA",
-  "Pulmonary hypertension" = "Q_DIAG_PULM_HYPER",
-  "COPD" = "Q_DIAG_COPD",
-  "Epilepsy" = "Q_DIAG_EPILEPSY",
-  "Cerebral palsy" = "Q_DIAG_CEREBRALPALSY",
-  "Kidney disease"        = "Q_DIAG_CKD",
-  "Rheumatoid arthritis or SLE" = "Q_DIAG_RA_SLE",
-  "Learning disability or Down's Syndrome" = "Q_LEARN_CAT",
-  "Thrombosis or pulmonary embolus" = "Q_DIAG_VTE",
-  "Care home or homeless" = "Q_HOME_CAT",
-  "Stroke or TIA" = "Q_DIAG_STROKE",
-  "Peripheral vascular disease" = "Q_DIAG_PVD",
-  "Sickle cell disease" = "Q_DIAG_SICKLE_CELL",
-  "Heart failure" = "Q_DIAG_CCF",
-  "Diabetes type 2" = "Q_DIAG_DIABETES_2",
-  "Atrial fibrillation" = "Q_DIAG_AF",
-  "Prior fracture: hip, wrist, spine or humerus" = "Q_DIAG_FRACTURE",
-  "Coronary heart disease" = "Q_DIAG_CHD",
-  "Asthma" = "Q_DIAG_ASTHMA",
-  "Severe mental illness" = "Q_DIAG_SEV_MENT_ILL",
-  "Congenital heart disease" = "Q_DIAG_CONGEN_HD"
+# tidy plot of demographics and health characteristics =======
+
+
+t_coef_ref <- tribble(
+  ~xvar,                ~xlbl, ~doseb_est, ~doseb_conf_low, ~doesb_conf_high,
+  "vacc_dose_interval", "pv_period_fv2_2:9",  1.000, 1.000, 1.000
 )
 
-lkp_colour_qcovid <- "#fb8c61"
 
-p_coef_qcovid <-
-  t_coef_qcovid %>% 
-  filter(term != "Q_DIAG_CEREBRALPALSY") %>% 
-  filter(term %in% lkp_qcovid) %>% 
+p_coef_overall <-
+  bind_rows(
+    t_coef_overall %>% mutate(est_type = "estimate"),
+    t_coef_ref     %>% mutate(est_type = "reference")
+  ) 
+p_coef_overall$doseb_conf_high<-coalesce(p_coef_overall$doseb_conf_high,
+                                         p_coef_overall$doesb_conf_high)
+p_coef_overall$doesb_conf_high<-NULL
+p_coef_overall_o1 <-p_coef_overall%>% 
+  filter(
+    xvar %in% lkp_xvar,
+    xlbl %in% lkp_xlbl
+  ) %>% 
   mutate(
-    term = factor(term, lkp_qcovid, names(lkp_qcovid)),
-    term = fct_rev(term)
+    xvar = factor(xvar, lkp_xvar, names(lkp_xvar)),
+    xlbl = factor(xlbl, lkp_xlbl, names(lkp_xlbl))
   ) %>% 
   ggplot(aes(
-    x = doseb_est,
-    xmin = doseb_conf_low,
-    xmax = doseb_conf_high,
-    y = term
+    x = xlbl,
+    ymin = doseb_conf_low,
+    ymax = doseb_conf_high,
+    y = doseb_est,
+    colour = est_type
   )) +
-  geom_vline(xintercept = 1) +
-  geom_pointrange(colour = lkp_colour_qcovid) +
-  scale_x_continuous(
+  geom_hline(yintercept = 1,
+             linetype = "dashed") +
+  geom_pointrange() +
+  scale_y_continuous(
     name = "Adjusted risk ratio (95% CI)",
     breaks = pretty_breaks()
   ) +
+  scale_colour_manual(values = lkp_colour) +
   theme(
-    axis.title.y      = element_blank(),
+    axis.title.x      = element_blank(),
+    strip.placement   = "outside",
     strip.background  = element_blank(),
-    axis.text = element_text(face="bold")
+    strip.text.y      = element_text(face = "bold"),
+    strip.text.x = element_text(face = "bold"),
+    legend.position   = "none",
+    axis.text = element_text(face="bold"),
+    axis.text.x = element_text(angle=90,vjust = 0.5),
+    plot.title = element_text(size = 11)
   ) +
   coord_cartesian(
-    xlim = c(0.5, 3)
+    ylim = c(0,10.5)
   ) +
   labs(
-    title = "QCovid1 items"
+    title = expression(Underweight~(BMI~"<"~18.5~kg/m^2~", "~N~"="~"36,197"))
   )
 
-p_coef_qcovid
+p_coef_overall_o1
+####
 
+# 18-24
+ARR_data <- read.csv("/conf/EAVE/GPanalysis/progs/UA/second_booster_dose_failures/obesity_codes/output/ARR_obesity_18-24.csv")
+expr_coef <- "([\\.0-9]+) \\(([\\.0-9]+), ([\\.0-9]+)\\)"
+
+### BMI
+ARR_data1 <- ARR_data[c(2,3,4),]
+z <- ARR_data1 %>% 
+  mutate(
+    xvar="vacc_dose_interval",
+    xlbl=X,
+    doseb_est       = as.numeric(str_replace(Adjusted.Rate.Ratio, expr_coef, "\\1")),
+    doseb_conf_low  = as.numeric(str_replace(LCI, expr_coef, "\\2")), 
+    doseb_conf_high = as.numeric(str_replace(UCI, expr_coef, "\\3"))
+  ) 
+t_coef_overall <- z[,c(6:10)]
+
+# tidy plot of demographics and health characteristics =======
+
+
+t_coef_ref <- tribble(
+  ~xvar,                ~xlbl, ~doseb_est, ~doseb_conf_low, ~doesb_conf_high,
+  "vacc_dose_interval", "pv_period_fv2_2:9",  1.000, 1.000, 1.000
+)
+
+
+p_coef_overall <-
+  bind_rows(
+    t_coef_overall %>% mutate(est_type = "estimate"),
+    t_coef_ref     %>% mutate(est_type = "reference")
+  ) 
+p_coef_overall$doseb_conf_high<-coalesce(p_coef_overall$doseb_conf_high,
+                                         p_coef_overall$doesb_conf_high)
+p_coef_overall$doesb_conf_high<-NULL
+p_coef_overall_o2 <-p_coef_overall%>% 
+  filter(
+    xvar %in% lkp_xvar,
+    xlbl %in% lkp_xlbl
+  ) %>% 
+  mutate(
+    xvar = factor(xvar, lkp_xvar, names(lkp_xvar)),
+    xlbl = factor(xlbl, lkp_xlbl, names(lkp_xlbl))
+  ) %>% 
+  ggplot(aes(
+    x = xlbl,
+    ymin = doseb_conf_low,
+    ymax = doseb_conf_high,
+    y = doseb_est,
+    colour = est_type
+  )) +
+  geom_hline(yintercept = 1,
+             linetype = "dashed") +
+  geom_pointrange() +
+  scale_y_continuous(
+    name = "Adjusted risk ratio (95% CI)",
+    breaks = pretty_breaks()
+  ) +
+  scale_colour_manual(values = lkp_colour) +
+  theme(
+    axis.title.x      = element_blank(),
+    strip.placement   = "outside",
+    strip.background  = element_blank(),
+    strip.text.y      = element_text(face = "bold"),
+    strip.text.x = element_text(face = "bold"),
+    legend.position   = "none",
+    axis.text = element_text(face="bold"),
+    axis.text.x = element_text(angle=90,vjust = 0.5),
+    plot.title = element_text(size = 11)
+  ) +
+  coord_cartesian(
+    ylim = c(0,10.5)
+  ) +
+  labs(
+    title = expression(Normal~weight~(BMI~18.5-24.9~kg/m^2~", "~N~"="~"456,128"))
+  )
+
+p_coef_overall_o2
+####
+
+# 25-29
+ARR_data <- read.csv("/conf/EAVE/GPanalysis/progs/UA/second_booster_dose_failures/obesity_codes/output/ARR_obesity_25-29.csv")
+expr_coef <- "([\\.0-9]+) \\(([\\.0-9]+), ([\\.0-9]+)\\)"
+
+### BMI
+ARR_data1 <- ARR_data[c(2,3,4),]
+z <- ARR_data1 %>% 
+  mutate(
+    xvar="vacc_dose_interval",
+    xlbl=X,
+    doseb_est       = as.numeric(str_replace(Adjusted.Rate.Ratio, expr_coef, "\\1")),
+    doseb_conf_low  = as.numeric(str_replace(LCI, expr_coef, "\\2")), 
+    doseb_conf_high = as.numeric(str_replace(UCI, expr_coef, "\\3"))
+  ) 
+t_coef_overall <- z[,c(6:10)]
+
+# tidy plot of demographics and health characteristics =======
+
+
+t_coef_ref <- tribble(
+  ~xvar,                ~xlbl, ~doseb_est, ~doseb_conf_low, ~doesb_conf_high,
+  "vacc_dose_interval", "pv_period_fv2_2:9",  1.000, 1.000, 1.000
+)
+
+p_coef_overall <-
+  bind_rows(
+    t_coef_overall %>% mutate(est_type = "estimate"),
+    t_coef_ref     %>% mutate(est_type = "reference")
+  ) 
+p_coef_overall$doseb_conf_high<-coalesce(p_coef_overall$doseb_conf_high,
+                                         p_coef_overall$doesb_conf_high)
+p_coef_overall$doesb_conf_high<-NULL
+p_coef_overall_o3 <-p_coef_overall%>% 
+  filter(
+    xvar %in% lkp_xvar,
+    xlbl %in% lkp_xlbl
+  ) %>% 
+  mutate(
+    xvar = factor(xvar, lkp_xvar, names(lkp_xvar)),
+    xlbl = factor(xlbl, lkp_xlbl, names(lkp_xlbl))
+  ) %>% 
+  ggplot(aes(
+    x = xlbl,
+    ymin = doseb_conf_low,
+    ymax = doseb_conf_high,
+    y = doseb_est,
+    colour = est_type
+  )) +
+  geom_hline(yintercept = 1,
+             linetype = "dashed") +
+  geom_pointrange() +
+  scale_y_continuous(
+    name = "Adjusted risk ratio (95% CI)",
+    breaks = pretty_breaks()
+  ) +
+  scale_colour_manual(values = lkp_colour) +
+  theme(
+    axis.title.x      = element_blank(),
+    strip.placement   = "outside",
+    strip.background  = element_blank(),
+    strip.text.y      = element_text(face = "bold"),
+    strip.text.x = element_text(face = "bold"),
+    legend.position   = "none",
+    axis.text = element_text(face="bold"),
+    axis.text.x = element_text(angle=90,vjust = 0.5),
+    plot.title = element_text(size = 11)
+  ) +
+  coord_cartesian(
+    ylim = c(0,10.5)
+  ) +
+  labs(
+    title = expression(Overweight~(BMI~25.0-29.9~kg/m^2~", "~N~"="~"2,428,889"))
+  )
+
+p_coef_overall_o3
+####
+
+# 30-39
+ARR_data <- read.csv("/conf/EAVE/GPanalysis/progs/UA/second_booster_dose_failures/obesity_codes/output/ARR_obesity_30-39.csv")
+expr_coef <- "([\\.0-9]+) \\(([\\.0-9]+), ([\\.0-9]+)\\)"
+
+### BMI
+ARR_data1 <- ARR_data[c(2,3,4),]
+z <- ARR_data1 %>% 
+  mutate(
+    xvar="vacc_dose_interval",
+    xlbl=X,
+    doseb_est       = as.numeric(str_replace(Adjusted.Rate.Ratio, expr_coef, "\\1")),
+    doseb_conf_low  = as.numeric(str_replace(LCI, expr_coef, "\\2")), 
+    doseb_conf_high = as.numeric(str_replace(UCI, expr_coef, "\\3"))
+  ) 
+t_coef_overall <- z[,c(6:10)]
+
+# tidy plot of demographics and health characteristics =======
+
+
+t_coef_ref <- tribble(
+  ~xvar,                ~xlbl, ~doseb_est, ~doseb_conf_low, ~doesb_conf_high,
+  "vacc_dose_interval", "pv_period_fv2_2:9",  1.000, 1.000, 1.000
+)
+
+p_coef_overall <-
+  bind_rows(
+    t_coef_overall %>% mutate(est_type = "estimate"),
+    t_coef_ref     %>% mutate(est_type = "reference")
+  ) 
+p_coef_overall$doseb_conf_high<-coalesce(p_coef_overall$doseb_conf_high,
+                                         p_coef_overall$doesb_conf_high)
+p_coef_overall$doesb_conf_high<-NULL
+p_coef_overall_o4 <-p_coef_overall%>% 
+  filter(
+    xvar %in% lkp_xvar,
+    xlbl %in% lkp_xlbl
+  ) %>% 
+  mutate(
+    xvar = factor(xvar, lkp_xvar, names(lkp_xvar)),
+    xlbl = factor(xlbl, lkp_xlbl, names(lkp_xlbl))
+  ) %>% 
+  ggplot(aes(
+    x = xlbl,
+    ymin = doseb_conf_low,
+    ymax = doseb_conf_high,
+    y = doseb_est,
+    colour = est_type
+  )) +
+  geom_hline(yintercept = 1,
+             linetype = "dashed") +
+  geom_pointrange() +
+  scale_y_continuous(
+    name = "Adjusted risk ratio (95% CI)",
+    breaks = pretty_breaks()
+  ) +
+  scale_colour_manual(values = lkp_colour) +
+  theme(
+    axis.title.x      = element_blank(),
+    strip.placement   = "outside",
+    strip.background  = element_blank(),
+    strip.text.y      = element_text(face = "bold"),
+    strip.text.x = element_text(face = "bold"),
+    legend.position   = "none",
+    axis.text = element_text(face="bold"),
+    axis.text.x = element_text(angle=90,vjust = 0.5),
+    plot.title = element_text(size = 11)
+  ) +
+  coord_cartesian(
+    ylim = c(0,10.5)
+  ) +
+  labs(
+    title = expression(Obese~(BMI~30.0-39.9~kg/m^2~", "~N~"="~"568,420"))
+  )
+
+p_coef_overall_o4
+####
+
+# >40
+ARR_data <- read.csv("/conf/EAVE/GPanalysis/progs/UA/second_booster_dose_failures/obesity_codes/output/ARR_obesity_>40.csv")
+expr_coef <- "([\\.0-9]+) \\(([\\.0-9]+), ([\\.0-9]+)\\)"
+
+### BMI
+ARR_data1 <- ARR_data[c(2,3,4),]
+z <- ARR_data1 %>% 
+  mutate(
+    xvar="vacc_dose_interval",
+    xlbl=X,
+    doseb_est       = as.numeric(str_replace(Adjusted.Rate.Ratio, expr_coef, "\\1")),
+    doseb_conf_low  = as.numeric(str_replace(LCI, expr_coef, "\\2")), 
+    doseb_conf_high = as.numeric(str_replace(UCI, expr_coef, "\\3"))
+  ) 
+t_coef_overall <- z[,c(6:10)]
+
+# tidy plot of demographics and health characteristics =======
+
+
+t_coef_ref <- tribble(
+  ~xvar,                ~xlbl, ~doseb_est, ~doseb_conf_low, ~doesb_conf_high,
+  "vacc_dose_interval", "pv_period_fv2_2:9",  1.000, 1.000, 1.000
+)
+
+
+p_coef_overall <-
+  bind_rows(
+    t_coef_overall %>% mutate(est_type = "estimate"),
+    t_coef_ref     %>% mutate(est_type = "reference")
+  ) 
+p_coef_overall$doseb_conf_high<-coalesce(p_coef_overall$doseb_conf_high,
+                                         p_coef_overall$doesb_conf_high)
+p_coef_overall$doesb_conf_high<-NULL
+p_coef_overall_o5 <-p_coef_overall%>% 
+  filter(
+    xvar %in% lkp_xvar,
+    xlbl %in% lkp_xlbl
+  ) %>% 
+  mutate(
+    xvar = factor(xvar, lkp_xvar, names(lkp_xvar)),
+    xlbl = factor(xlbl, lkp_xlbl, names(lkp_xlbl))
+  ) %>% 
+  ggplot(aes(
+    x = xlbl,
+    ymin = doseb_conf_low,
+    ymax = doseb_conf_high,
+    y = doseb_est,
+    colour = est_type
+  )) +
+  geom_hline(yintercept = 1,
+             linetype = "dashed") +
+  geom_pointrange() +
+  scale_y_continuous(
+    name = "Adjusted risk ratio (95% CI)",
+    breaks = pretty_breaks()
+  ) +
+  scale_colour_manual(values = lkp_colour) +
+  theme(
+    axis.title.x      = element_blank(),
+    strip.placement   = "outside",
+    strip.background  = element_blank(),
+    strip.text.y      = element_text(face = "bold"),
+    strip.text.x = element_text(face = "bold"),
+    legend.position   = "none",
+    axis.text = element_text(face="bold"),
+    axis.text.x = element_text(angle=90,vjust = 0.5),
+    plot.title = element_text(size = 11)
+  ) +
+  coord_cartesian(
+    ylim = c(0,10.5)
+  ) +
+  labs(
+    title = expression(Severly~obese~(BMI~40.0+~kg/m^2~", "~N~"="~"98,706"))
+  )
+
+p_coef_overall_o5
+####
 # combine =====
 
-p_coef <- plot_grid(p_coef_overall_o, p_coef_qcovid)
-
+p_coef <- plot_grid(p_coef_overall_o1,p_coef_overall_o2,
+                    p_coef_overall_o3,p_coef_overall_o4,p_coef_overall_o5)
+print(p_coef)
 ggsave(
   plot = p_coef,
   filename = "/conf/EAVE/GPanalysis/progs/UA/p_vacc_breakthrough_coef.png",
@@ -282,4 +500,4 @@ ggsave(
   units = "cm"
 )
 
-print(p_coef)
+
