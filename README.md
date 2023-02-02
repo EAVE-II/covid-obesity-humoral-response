@@ -1,10 +1,10 @@
 # EAVE II Analysis Repository
-## [Insert full title here]  
+## Accelerated waning of the humoral response to SARS-CoV-2 vaccines in obesity  
 
 ### Paper Details
 > **Short title:** covid second booster failures
 >
->**DOI:** Accelerated waning of the humoral response to SARS-CoV-2 vaccines in obesity
+>**DOI:** [Insert DOI of paper here]
 >
 >**Paper authors:** [Insert the top 6 authors of paper (followed by ‘et al’ if more) here]
 >
