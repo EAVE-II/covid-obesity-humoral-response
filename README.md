@@ -2,9 +2,9 @@
 ## [Insert full title here]  
 
 ### Paper Details
-> **Short title:** [Insert short title of paper here]
+> **Short title:** covid second booster failures
 >
->**DOI:** [Insert DOI of paper here]
+>**DOI:** Accelerated waning of the humoral response to SARS-CoV-2 vaccines in obesity
 >
 >**Paper authors:** [Insert the top 6 authors of paper (followed by ‘et al’ if more) here]
 >
